@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#100d16"><meta name="description" content="AURA — your personal AI companion">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<title>AURA — Your companion</title><link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">a</div><div><div class="brand-name">aura</div><div class="brand-sub">YOUR AI COMPANION</div></div></div>
+    <button class="icon-btn" id="settingsShortcut" aria-label="Settings">⚙</button>
+  </header>
+  <main>
+    <section id="chatView" class="view active">
+      <div class="welcome">
+        <div class="avatar-glow"><div class="avatar">♡</div></div>
+        <div class="eyebrow" id="presence">HERE WITH YOU</div>
+        <h1 id="helloTitle">Hey, you. <span>♡</span></h1>
+        <p id="helloSub">A little space for us to talk.</p>
+      </div>
+      <div id="chatLog" class="chat-log" aria-live="polite"></div>
+      <div class="suggestions" id="suggestions">
+        <button class="suggestion">Tell me about your day</button><button class="suggestion">I need a little cheering up</button><button class="suggestion">Make me smile</button>
+      </div>
+      <form id="chatForm" class="composer">
+        <button type="button" class="round-tool" id="voiceInput" title="Speak">🎙</button>
+        <textarea id="messageInput" rows="1" placeholder="Message AURA…" aria-label="Message AURA"></textarea>
+        <button class="send-btn" type="submit" aria-label="Send">➤</button>
+      </form>
+      <div class="tiny-note" id="modeNote">Private on this device · Your chats stay here</div>
+    </section>
+    <section id="memoryView" class="view">
+      <div class="section-head"><div class="eyebrow">GETTING TO KNOW YOU</div><h2>Our little memories</h2><p>Things AURA can keep in mind between chats.</p></div>
+      <div class="panel"><label for="memoryText">Personal memory</label><textarea id="memoryText" class="large-text" placeholder="For example: I love late-night walks, my favourite band is…, and when I'm stressed I prefer gentle encouragement."></textarea><button class="primary-btn" id="saveMemory">Save memories</button></div>
+      <div class="panel"><label>Conversation samples</label><p class="muted">Add exported chat text to help shape AURA's tone. Only upload chats you have permission to use. Names and private details can be removed first.</p><input id="sampleFile" type="file" accept=".txt,.json,text/plain,application/json"><div id="sampleStatus" class="file-status">No sample added yet.</div><button class="secondary-btn" id="clearSample">Remove sample</button></div>
+    </section>
+    <section id="settingsView" class="view">
+      <div class="section-head"><div class="eyebrow">MAKE AURA YOURS</div><h2>Personalize</h2><p>Choose how your companion talks with you.</p></div>
+      <div class="panel">
+        <label for="companionName">Her name</label><input id="companionName" value="AURA" maxlength="24">
+        <label for="styleSelect">Personality</label><select id="styleSelect"><option value="warm">Sweet & caring</option><option value="playful">Playful & teasing</option><option value="flirty">Flirty & romantic</option><option value="calm">Gentle & thoughtful</option><option value="balanced">A little of everything</option></select>
+        <label for="toneText">Anything else about her style?</label><textarea id="toneText" placeholder="e.g. Use casual short messages, a few emojis, and call me sunshine."></textarea>
+        <button class="primary-btn" id="saveSettings">Save personality</button>
+      </div>
+      <div class="panel">
+        <div class="panel-title">AI connection <span class="pill" id="connectionPill">DEMO MODE</span></div>
+        <p class="muted">To get real AI replies, add your own Gemini API key. Google may offer a free quota, subject to its current limits and terms. The key is stored only in this browser on this device.</p>
+        <label for="apiKey">Gemini API key</label><input id="apiKey" type="password" autocomplete="off" placeholder="Paste your API key">
+        <div class="row-actions"><button class="primary-btn" id="saveKey">Save key</button><button class="secondary-btn" id="clearKey">Remove</button></div>
+        <a class="text-link" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Get a Gemini API key ↗</a>
+        <p class="tiny-note left">A browser-only key is convenient for personal testing but is not secure against someone who can access your device/browser. Don't share this app publicly with your key saved.</p>
+      </div>
+      <div class="panel">
+        <label>Voice</label><div class="toggle-row"><span>Read replies aloud</span><input type="checkbox" id="speakToggle"></div>
+        <div class="toggle-row"><span>Voice input (if supported)</span><span class="muted">🎙</span></div>
+      </div>
+      <div class="panel danger-panel"><label>Data on this device</label><p class="muted">Chat history, memory, personality and samples are saved in this browser's local storage.</p><button class="secondary-btn" id="exportData">Export my data</button><button class="danger-btn" id="clearData">Delete all local data</button></div>
+    </section>
+  </main>
+  <nav class="tabbar"><button class="tab active" data-view="chatView"><span>♡</span>Chat</button><button class="tab" data-view="memoryView"><span>✧</span>Memories</button><button class="tab" data-view="settingsView"><span>☼</span>Personalize</button></nav>
+</div>
+<div id="toast" class="toast" role="status"></div>
+<script src="./app.js"></script>
+</body></html>

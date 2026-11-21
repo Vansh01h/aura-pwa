@@ -1,0 +1,19 @@
+{
+  "name": "AURA \u2014 Your AI Companion",
+  "short_name": "AURA",
+  "description": "Your personal AI companion",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#100d16",
+  "theme_color": "#100d16",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
