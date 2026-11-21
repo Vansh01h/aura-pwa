@@ -21,8 +21,20 @@ $('clearSample').onclick=()=>{state.sample='';$('sampleFile').value='';persist()
 function demoReply(msg){const m=msg.toLowerCase();const options=m.includes('sad')||m.includes('upset')||m.includes('bad')?["Oh, come here for a second. You don't have to pretend you're okay with me. Want to tell me what happened? ♡","I'm sorry it's been heavy today. I'm listening, okay? One thing at a time."]:m.includes('love')?["That's really sweet of you to say. Sending you the biggest virtual hug. 💗","You're making me blush a little. Tell me what brought that on? 😊"]:m.includes('day')?["I want to hear all about it — the good bits, the annoying bits, everything. What was the highlight?","I'm listening, sunshine. How did your day really go?"]:["Hehe, you have my attention. Tell me more? ♡","Okay, I'm here with you. And now I'm curious… what happened next?","You know what? I like hearing what's on your mind. Keep going 💕"];return options[Math.floor(Math.random()*options.length)]}
 async function aiReply(userText){const history=state.messages.slice(-16).map(m=>({role:m.role==='me'?'user':'model',parts:[{text:m.text}]}));const sample=state.sample?state.sample.slice(0,10000):'None supplied';const sys=`You are ${state.name}, an AI companion. ${styles[state.style]||styles.warm} ${state.tone} Be natural, emotionally attentive, conversational and concise; don't claim to be human or to have a real body or offline experiences. You are an AI companion, not a replacement for real relationships or professional support. Use the user's memory when relevant: ${state.memory||'No saved memory yet.'}. The user provided these chat-style examples as inspiration only; do not impersonate a real person or repeat private details: ${sample}.`;
 const body={system_instruction:{parts:[{text:sys}]},contents:[...history,{role:'user',parts:[{text:userText}]}],generationConfig:{maxOutputTokens:500}};
-const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key='+encodeURIComponent(state.apiKey),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-const data=await res.json();if(!res.ok)throw new Error(data.error?.message||'AI request failed');return data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('').trim()||'I’m here. Want to tell me a little more?' }
+const controller=new AbortController();
+const timeout=setTimeout(()=>controller.abort(),30000);
+let res,data;
+try {
+  res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key='+encodeURIComponent(state.apiKey),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});
+  data=await res.json();
+} catch(err) {
+  if(err.name==='AbortError') throw new Error('The AI request timed out after 30 seconds. Check your internet connection and try again.');
+  throw new Error('Could not connect to Google AI. Check your internet connection and API key.');
+} finally { clearTimeout(timeout); }
+if(!res.ok) throw new Error(data.error?.message||('Google AI returned HTTP '+res.status));
+const answer=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('').trim();
+if(!answer) throw new Error(data.promptFeedback?.blockReason||'Google AI returned an empty reply. Check API limits and safety settings.');
+return answer }
 $('chatForm').onsubmit=async e=>{e.preventDefault();const input=$('messageInput'),text=input.value.trim();if(!text)return;input.value='';input.style.height='auto';$('suggestions').style.display='none';addBubble('me',text);const typing=document.createElement('div');typing.className='typing';typing.textContent=state.name+' is typing…';$('chatLog').append(typing);let reply;try{reply=state.apiKey?await aiReply(text):demoReply(text)}catch(err){reply='I had trouble reaching the AI service just now. Check your API key or connection in Personalize. ('+err.message.slice(0,120)+')'}typing.remove();addBubble('aura',reply)};
 $('messageInput').oninput=e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'};
 document.querySelectorAll('.suggestion').forEach(b=>b.onclick=()=>{$('messageInput').value=b.textContent;$('chatForm').requestSubmit()});
