@@ -1,0 +1,23 @@
+AURA + OpenAI setup (one-time)
+
+IMPORTANT: Do NOT paste your OpenAI secret key into AURA or GitHub. The key is stored as a Cloudflare Worker secret.
+
+PART A — Deploy the backend (Cloudflare Workers)
+1. On a computer, open https://dash.cloudflare.com/ and create/sign in to a free account.
+2. Open Workers & Pages → Create → Worker. Name it aura-openai-backend.
+3. Deploy a simple Hello World worker once, then open Edit code.
+4. Replace the worker code with the full contents of worker.js from this folder. Save and Deploy.
+5. In the Worker settings, open Variables and Secrets. Add a secret named OPENAI_API_KEY and paste your OpenAI API key as its value. Save.
+6. Copy the Worker URL, e.g. https://aura-openai-backend.YOUR-SUBDOMAIN.workers.dev
+
+PART B — Update AURA website
+1. In your GitHub repository Vansh01h/aura-pwa, upload/replace index.html, app.js, and sw.js from this folder (keep the icons, style.css and manifest files already in the repository).
+2. Commit the changes and wait for GitHub Pages to publish.
+3. Open AURA → Personalize → AURA backend URL. Paste the Worker URL, tap Save connection.
+4. Return to Chat and test with “Hi”.
+
+NOTES
+- The backend URL ends in workers.dev; do not add /chat to the saved URL (AURA adds it automatically).
+- OpenAI API usage is billed separately from ChatGPT plans. Check https://platform.openai.com/settings/organization/billing.
+- For safety, set usage limits/alerts in your OpenAI project. A public endpoint can be abused; this starter worker is intended for personal testing and does not include user authentication or rate limiting.
+- If the app still shows the old UI, close the installed PWA fully and reopen it, or clear the site's cached data.

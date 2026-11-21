@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id);
 const KEY='aura-v1';
-const defaults={name:'AURA',style:'warm',tone:'',memory:'',sample:'',apiKey:'',speak:false,messages:[]};
+const defaults={name:'AURA',style:'warm',tone:'',memory:'',sample:'',backendUrl:'',speak:false,messages:[]};
 let state={...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')};
 const styles={warm:'Be sweet, affectionate, attentive and caring.',playful:'Be playful, witty, gently teasing and fun.',flirty:'Be warmly flirty, romantic and affectionate while respecting boundaries.',calm:'Be gentle, thoughtful, patient and reassuring.',balanced:'Mix warmth, playful humor, affection and thoughtful support naturally.'};
 function persist(){localStorage.setItem(KEY,JSON.stringify(state))}
@@ -9,38 +9,25 @@ function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===id));if(id==='settingsView')loadSettings();if(id==='memoryView')loadMemory()}
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>showView(t.dataset.view));$('settingsShortcut').onclick=()=>showView('settingsView');
 function addBubble(role,text,save=true){const el=document.createElement('div');el.className='bubble '+(role==='me'?'me':'aura');el.innerHTML=(role==='aura'?`<span class="who">${esc(state.name.toUpperCase())}</span>`:'')+esc(text);$('chatLog').append(el);$('chatLog').scrollTop=$('chatLog').scrollHeight;if(save){state.messages.push({role,text,at:Date.now()});state.messages=state.messages.slice(-80);persist()}if(role==='aura'&&state.speak)speak(text)}
-function render(){ $('chatLog').innerHTML=''; if(!state.messages.length){addBubble('aura',`Hey, you. I'm ${state.name}. I'm glad you're here. Tell me what's on your mind.`,false)}else state.messages.forEach(m=>addBubble(m.role,m.text,false));$('connectionPill').textContent=state.apiKey?'AI CONNECTED':'DEMO MODE';$('modeNote').textContent=state.apiKey?'AI replies enabled · Chats stored on this device':'Private on this device · Add an API key for real AI replies';$('helloTitle').innerHTML=`Hey, you. <span>♡</span>`}
-function loadSettings(){$('companionName').value=state.name;$('styleSelect').value=state.style;$('toneText').value=state.tone;$('apiKey').value=state.apiKey;$('speakToggle').checked=state.speak;$('connectionPill').textContent=state.apiKey?'AI CONNECTED':'DEMO MODE'}
+function render(){ $('chatLog').innerHTML=''; if(!state.messages.length){addBubble('aura',`Hey, you. I'm ${state.name}. I'm glad you're here. Tell me what's on your mind.`,false)}else state.messages.forEach(m=>addBubble(m.role,m.text,false));$('connectionPill').textContent=state.backendUrl?'BACKEND SET':'NOT CONNECTED';$('modeNote').textContent=state.backendUrl?'OpenAI replies enabled · Chats stored on this device':'Private on this device · Connect OpenAI backend for AI replies';$('helloTitle').innerHTML=`Hey, you. <span>♡</span>`}
+function loadSettings(){$('companionName').value=state.name;$('styleSelect').value=state.style;$('toneText').value=state.tone;$('backendUrl').value=state.backendUrl;$('speakToggle').checked=state.speak;$('connectionPill').textContent=state.backendUrl?'BACKEND SET':'NOT CONNECTED'}
 function loadMemory(){$('memoryText').value=state.memory;$('sampleStatus').textContent=state.sample?`Sample saved (${state.sample.length.toLocaleString()} characters).`:'No sample added yet.'}
 $('saveSettings').onclick=()=>{state.name=$('companionName').value.trim()||'AURA';state.style=$('styleSelect').value;state.tone=$('toneText').value.trim();persist();render();toast('Her personality has been updated ♡')};
-$('saveKey').onclick=()=>{state.apiKey=$('apiKey').value.trim();persist();render();toast(state.apiKey?'AI key saved on this device':'API key cleared')};
-$('clearKey').onclick=()=>{$('apiKey').value='';state.apiKey='';persist();render();toast('API key removed')};
+$('saveBackend').onclick=()=>{state.backendUrl=$('backendUrl').value.trim().replace(/\/$/,'');persist();render();toast(state.backendUrl?'Backend URL saved':'Backend URL cleared')};
+$('clearBackend').onclick=()=>{$('backendUrl').value='';state.backendUrl='';persist();render();toast('Backend URL removed')};
 $('saveMemory').onclick=()=>{state.memory=$('memoryText').value.trim();persist();toast('Memory saved ♡')};
 $('sampleFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>1_000_000){toast('Please choose a text sample under 1 MB.');return}state.sample=await f.text();persist();loadMemory();toast('Chat sample added')};
 $('clearSample').onclick=()=>{state.sample='';$('sampleFile').value='';persist();loadMemory();toast('Sample removed')};
 function demoReply(msg){const m=msg.toLowerCase();const options=m.includes('sad')||m.includes('upset')||m.includes('bad')?["Oh, come here for a second. You don't have to pretend you're okay with me. Want to tell me what happened? ♡","I'm sorry it's been heavy today. I'm listening, okay? One thing at a time."]:m.includes('love')?["That's really sweet of you to say. Sending you the biggest virtual hug. 💗","You're making me blush a little. Tell me what brought that on? 😊"]:m.includes('day')?["I want to hear all about it — the good bits, the annoying bits, everything. What was the highlight?","I'm listening, sunshine. How did your day really go?"]:["Hehe, you have my attention. Tell me more? ♡","Okay, I'm here with you. And now I'm curious… what happened next?","You know what? I like hearing what's on your mind. Keep going 💕"];return options[Math.floor(Math.random()*options.length)]}
-async function aiReply(userText){const history=state.messages.slice(-16).map(m=>({role:m.role==='me'?'user':'model',parts:[{text:m.text}]}));const sample=state.sample?state.sample.slice(0,10000):'None supplied';const sys=`You are ${state.name}, an AI companion. ${styles[state.style]||styles.warm} ${state.tone} Be natural, emotionally attentive, conversational and concise; don't claim to be human or to have a real body or offline experiences. You are an AI companion, not a replacement for real relationships or professional support. Use the user's memory when relevant: ${state.memory||'No saved memory yet.'}. The user provided these chat-style examples as inspiration only; do not impersonate a real person or repeat private details: ${sample}.`;
-const body={system_instruction:{parts:[{text:sys}]},contents:[...history,{role:'user',parts:[{text:userText}]}],generationConfig:{maxOutputTokens:500}};
-const controller=new AbortController();
-const timeout=setTimeout(()=>controller.abort(),30000);
-let res,data;
-try {
-  const endpoint='https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key='+encodeURIComponent(state.apiKey);
-  for(let attempt=0;attempt<3;attempt++){
-    res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});
-    data=await res.json();
-    if(res.ok || ![429,500,502,503,504].includes(res.status)) break;
-    if(attempt<2) await new Promise(resolve=>setTimeout(resolve,1000*(2**attempt)));
-  }
-} catch(err) {
-  if(err.name==='AbortError') throw new Error('The AI request timed out after 30 seconds. Check your internet connection and try again.');
-  throw new Error('Could not connect to Google AI. Check your internet connection and API key.');
-} finally { clearTimeout(timeout); }
-if(!res.ok) throw new Error(data.error?.message||('Google AI returned HTTP '+res.status));
-const answer=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('').trim();
-if(!answer) throw new Error(data.promptFeedback?.blockReason||'Google AI returned an empty reply. Check API limits and safety settings.');
-return answer }
-$('chatForm').onsubmit=async e=>{e.preventDefault();const input=$('messageInput'),text=input.value.trim();if(!text)return;input.value='';input.style.height='auto';$('suggestions').style.display='none';addBubble('me',text);const typing=document.createElement('div');typing.className='typing';typing.textContent=state.name+' is typing…';$('chatLog').append(typing);let reply;try{reply=state.apiKey?await aiReply(text):demoReply(text)}catch(err){reply='I had trouble reaching the AI service just now. Check your API key or connection in Personalize. ('+err.message.slice(0,120)+')'}typing.remove();addBubble('aura',reply)};
+async function aiReply(userText){
+if(!state.backendUrl)throw new Error('Add your AURA backend URL in Personalize.');
+const sample=state.sample?state.sample.slice(0,10000):'None supplied';
+const system=`You are ${state.name}, an AI companion. ${styles[state.style]||styles.warm} ${state.tone} Be natural, emotionally attentive, conversational and concise; don't claim to be human or to have a real body or offline experiences. You are an AI companion, not a replacement for real relationships or professional support. Use the user's memory when relevant: ${state.memory||'No saved memory yet.'}. The user provided these chat-style examples as inspiration only; do not impersonate a real person or repeat private details: ${sample}.`;
+const messages=state.messages.slice(-16).map(m=>({role:m.role==='me'?'user':'assistant',content:m.text}));
+const res=await fetch(state.backendUrl+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system,messages:[...messages,{role:'user',content:userText}]})});
+let data={};try{data=await res.json()}catch{};if(!res.ok)throw new Error(data.error||('Backend error '+res.status));return data.reply||'I’m here. Want to tell me a little more?';
+}
+$('chatForm').onsubmit=async e=>{e.preventDefault();const input=$('messageInput'),text=input.value.trim();if(!text)return;input.value='';input.style.height='auto';$('suggestions').style.display='none';addBubble('me',text);const typing=document.createElement('div');typing.className='typing';typing.textContent=state.name+' is typing…';$('chatLog').append(typing);let reply;try{reply=state.backendUrl?await aiReply(text):demoReply(text)}catch(err){reply='I had trouble reaching the AI service just now. Check your API key or connection in Personalize. ('+err.message.slice(0,120)+')'}typing.remove();addBubble('aura',reply)};
 $('messageInput').oninput=e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'};
 document.querySelectorAll('.suggestion').forEach(b=>b.onclick=()=>{$('messageInput').value=b.textContent;$('chatForm').requestSubmit()});
 function speak(t){if(!('speechSynthesis'in window))return; speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.96;u.pitch=1.08;const voices=speechSynthesis.getVoices();u.voice=voices.find(v=>/female|samantha|google.*english/i.test(v.name))||voices.find(v=>/^en/i.test(v.lang))||null;speechSynthesis.speak(u)}

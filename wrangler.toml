@@ -1,0 +1,3 @@
+name = "aura-openai-backend"
+main = "worker.js"
+compatibility_date = "2026-11-21"
