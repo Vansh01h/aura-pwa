@@ -25,8 +25,13 @@ const controller=new AbortController();
 const timeout=setTimeout(()=>controller.abort(),30000);
 let res,data;
 try {
-  res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key='+encodeURIComponent(state.apiKey),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});
-  data=await res.json();
+  const endpoint='https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key='+encodeURIComponent(state.apiKey);
+  for(let attempt=0;attempt<3;attempt++){
+    res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});
+    data=await res.json();
+    if(res.ok || ![429,500,502,503,504].includes(res.status)) break;
+    if(attempt<2) await new Promise(resolve=>setTimeout(resolve,1000*(2**attempt)));
+  }
 } catch(err) {
   if(err.name==='AbortError') throw new Error('The AI request timed out after 30 seconds. Check your internet connection and try again.');
   throw new Error('Could not connect to Google AI. Check your internet connection and API key.');
